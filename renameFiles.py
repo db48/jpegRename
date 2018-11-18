@@ -28,8 +28,6 @@ with open(csvFile) as csv_file:
     for row in csv_reader:
         if line_count == 0:
             #skip this line, it's the title
-            print(row)
-        elif line_count == 1:  #the first line is a title line...
             print(f'Column names are {", ".join(row)}')
         else:
             #this is where we'll read the columns we want
