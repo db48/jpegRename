@@ -11,6 +11,7 @@ from shutil import copyfile
 inputPath = '../../renameTheseFiles/'
 outputPath = '../../renamedFiles/'
 csvFile = '../../C_Skus_1.csv'
+errorFile = '../../renamedFiles/errors.txt'
 skuColNum = 8
 spineColNum = 4
 
@@ -22,6 +23,7 @@ with open(csvFile) as csv_file:
     entry_count = 0
     spine = []
     sku = []
+    title = []
 
     for row in csv_reader:
         if line_count == 0:
@@ -40,6 +42,7 @@ with open(csvFile) as csv_file:
                                 for sn_rng in range(int(sted[0]),int(sted[1])):
                                     spine.append(int(sn_rng))
                                     sku.append(int(row[skuColNum]))
+                                    title.append(row[1])
                                     entry_count += 1
                             else:
                                 print(f'Weve got a weird one {sn2}')                        
@@ -47,6 +50,7 @@ with open(csvFile) as csv_file:
                             if 'NA' not in sn2:
                                 spine.append(int(sn2))
                                 sku.append(int(row[skuColNum]))
+                                title.append(row[1])
                                 entry_count += 1
             else:
                 if 'DVD' not in row[0]:
@@ -71,6 +75,9 @@ print(f'we are missing a total of {totMissed} spine numbers between 1 and 850 (a
 # now lets get a file list of all of the files in the directory
 fileNames = [f for f in listdir(inputPath) if isfile(join(inputPath, f))]
 
+#open the error file for writing
+fp = open(errorFile,'w') 
+
 nFilesMissed = 0
 nFiles = 0
 nFilesBad = 0
@@ -84,24 +91,29 @@ for f in fileNames:
                         if int(sn2) not in spine:
                             if int(sn2) in missingSpines:
                                 #print(f'found cover for {sn2}, but we are missing it from the file')
+                                fp.write(f'found cover for {sn2}, but we are missing it from the file\n') 
                                 nFilesMissed += 1
                             else:
+                                fp.write(f'found cover for {sn2}, but we are missing it from the file (error case)\n') 
                                 print(f'-------ERROR:spine: {sn2} not found--------')
                                 nFilesMissed += 1
                         elif int(sn2) in badSpines:
                             #print(f'skipping {sn2} because there are multiples')
+                            fp.write(f'skipping {sn2} because there are multiples\n') 
                             xx=2
                         else:
                             spIdx = spine.index(int(sn2))
                             skuOut = sku[spIdx]
                             #print(f'spine: {sn2} maps to sku: {skuOut} at index: {spIdx}')
                             #### here is where we'll do the actual renaming!
-                            copyfile(inputPath+f, outputPath+str(skuOut)+'.Main.jpg')
+                            #copyfile(inputPath+f, outputPath+str(skuOut)+'.Main.jpg')
                             nFiles += 1
                 else:
                     #print(f'spine: {sn2} bad')
+                    fp.write(f'skip {sn2}, because I assume it is not an actual cover\n') 
                     nFilesBad += 1
 
 
 print(f'there are {nFiles} files to be renamed, and we missed {nFilesMissed}, with {nFilesBad} skipped')
+fp.close() 
 
